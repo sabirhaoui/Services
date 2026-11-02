@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "event_id": "0b4ea23d-f08e-47e7-b96f-d5511fca27fd",
+  "event_type": "job.completed",
+  "timestamp": "2026-11-02T12:00:00Z",
+  "service": {
+    "name": "demo",
+    "version": "0.1.0"
+  },
+  "environment": "test",
+  "level": "INFO",
+  "message": "operation.completed",
+  "trace_id": "11111111111111111111111111111111",
+  "span_id": "0000000000000002",
+  "request_id": "9b6fd860-c178-4338-a57b-9a13786804be",
+  "duration_ms": 100,
+  "outcome": "success",
+  "attributes": {
+    "operation": "ingestion"
+  },
+  "job_id": "11111111-1111-4111-8111-111111111111"
+}

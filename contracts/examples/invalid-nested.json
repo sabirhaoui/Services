@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0.0",
+  "event_id": "b5c18b55-fce7-4ba1-8c32-92cad740e553",
+  "event_type": "http.completed",
+  "timestamp": "2026-11-02T16:16:02.029088Z",
+  "service": {
+    "name": "demo",
+    "version": "0.1.0"
+  },
+  "environment": "test",
+  "level": "INFO",
+  "message": "operation.completed",
+  "trace_id": "11111111111111111111111111111111",
+  "span_id": "0000000000000001",
+  "request_id": "749e9340-22a9-4c5f-a82c-5be5b64689fa",
+  "duration_ms": 100,
+  "outcome": "success",
+  "attributes": {
+    "nested": {
+      "password": "synthetic-secret",
+      "email": "synthetic@example.invalid"
+    }
+  }
+}
