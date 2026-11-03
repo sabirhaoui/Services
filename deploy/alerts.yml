@@ -1,0 +1,27 @@
+groups:
+  - name: filebeat
+    rules:
+      - alert: FilebeatDown
+        expr: up{job="filebeat"} == 0
+        for: 30s
+        labels: {severity: critical}
+        annotations: {summary: 'Collecte indisponible : verifier readiness, disque et processus'}
+      - alert: FilebeatBacklog
+        expr: filebeat_queue_oldest_seconds > 60
+        for: 30s
+        labels: {severity: warning}
+        annotations: {summary: 'Retard de livraison Loki supérieur à 60 secondes'}
+      - alert: FilebeatQuarantine
+        expr: filebeat_quarantine_depth > 0
+        for: 10s
+        labels: {severity: warning}
+        annotations: {summary: 'Rejet permanent : corriger Loki puis rejouer la quarantaine protégée'}
+      - alert: FilebeatLatencyAnomaly
+        expr: filebeat_latency_anomaly == 1
+        for: 10s
+        labels: {severity: warning}
+        annotations: {summary: 'Latence au-dessus de la baseline MAD ; examiner les opérations observées'}
+      - alert: FilebeatRejected
+        expr: sum(increase(filebeat_ingest_total{outcome=~"invalid|full|storage_error|too_large"}[5m])) > 0
+        labels: {severity: warning}
+        annotations: {summary: 'Rejets avant acquittement ; le producteur doit mesurer ses abandons'}

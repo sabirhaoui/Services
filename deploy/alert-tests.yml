@@ -1,0 +1,21 @@
+rule_files: [alerts.yml]
+evaluation_interval: 5s
+tests:
+  - interval: 5s
+    input_series:
+      - series: 'up{job="filebeat",instance="gateway:8080"}'
+        values: '0x12'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: FilebeatDown
+        exp_alerts:
+          - exp_labels: {job: filebeat, instance: 'gateway:8080', severity: critical}
+            exp_annotations: {summary: 'Collecte indisponible : verifier readiness, disque et processus'}
+  - interval: 5s
+    input_series:
+      - series: 'up{job="filebeat",instance="gateway:8080"}'
+        values: '1x12'
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: FilebeatDown
+        exp_alerts: []
