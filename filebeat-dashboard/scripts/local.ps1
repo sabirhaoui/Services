@@ -7,7 +7,13 @@ if ($Action -eq 'init') {
   @("INGEST_TOKEN=$(New-Token)","PRIVACY_KEY=$(New-Token)",'PRIVACY_KEY_ID=k1',"GRAFANA_PASSWORD=$(New-Token)") | Set-Content .env
   return
 }
-if ($Action -eq 'test') { New-Item -ItemType Directory -Path .data -Force | Out-Null; $env:PYTHONPATH='src'; & $Python -m pytest -q --basetemp=('.data/pytest-'+[guid]::NewGuid()); exit $LASTEXITCODE }
+if ($Action -eq 'test') {
+  New-Item -ItemType Directory -Path .data -Force | Out-Null
+  $env:PYTHONPATH='src'
+  $testTemp = Join-Path .data ('pytest-' + [guid]::NewGuid())
+  & $Python -m pytest -q --basetemp $testTemp
+  exit $LASTEXITCODE
+}
 if ($Action -eq 'demo') {
   $entry=Get-Content .env | Where-Object { $_ -like 'INGEST_TOKEN=*' }
   $env:INGEST_TOKEN=$entry.Substring('INGEST_TOKEN='.Length)

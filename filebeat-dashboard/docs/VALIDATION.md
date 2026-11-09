@@ -22,7 +22,7 @@ La limite memoire Compose a ete retiree car le cgroup du Podman local refuse mem
 ./scripts/local.ps1 test -Python .venv/Scripts/python.exe
 .venv/Scripts/python.exe -m ruff check src tests demo scripts/smoke.py scripts/fault_probe.py
 ./scripts/local.ps1 validate -Engine podman
-podman run --rm --entrypoint /bin/promtool -v C:/workspace/Services/deploy:/work:ro -w /work docker.io/prom/prometheus:v3.3.0 test rules alert-tests.yml
+podman run --rm --entrypoint /bin/promtool -v "${PWD}/deploy:/work:ro" -w /work docker.io/prom/prometheus:v3.3.0 test rules alert-tests.yml
 .venv/Scripts/python.exe scripts/smoke.py
 .venv/Scripts/python.exe scripts/fault_probe.py
 ```
