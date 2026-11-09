@@ -1,4 +1,4 @@
-param([ValidateSet('init','config','up','stop','status','test','demo','validate')][string]$Action='status', [ValidateSet('docker','podman')][string]$Engine='docker', [string]$Python='python')
+param([ValidateSet('init','config','up','stop','status','test','demo','replay','validate')][string]$Action='status', [ValidateSet('docker','podman')][string]$Engine='docker', [string]$Python='python', [string]$LogDirectory='C:\workspace\logs\project_twins\sftp.prod.assystan', [ValidateRange(1,10000)][int]$Limit=100)
 $ErrorActionPreference='Stop'
 Set-Location (Split-Path $PSScriptRoot -Parent)
 if ($Action -eq 'init') {
@@ -18,6 +18,10 @@ if ($Action -eq 'demo') {
   $entry=Get-Content .env | Where-Object { $_ -like 'INGEST_TOKEN=*' }
   $env:INGEST_TOKEN=$entry.Substring('INGEST_TOKEN='.Length)
   & $Python demo/emit.py
+  exit $LASTEXITCODE
+}
+if ($Action -eq 'replay') {
+  & $Python scripts/import_remote_logs.py $LogDirectory --replay --limit $Limit
   exit $LASTEXITCODE
 }
 if ($Action -eq 'validate') {

@@ -174,6 +174,38 @@ def follow(args, token, opener):
             time.sleep(2)
 
 
+def replay(args, token, opener):
+    """Read a fixed snapshot of the local dump, newest segment first."""
+    segments = [
+        args.file / "events.jsonl",
+        *sorted(args.file.glob("events.*.jsonl"), reverse=True),
+    ]
+    totals = Counter()
+    for path in segments:
+        try:
+            stream = path.open("rb")
+        except FileNotFoundError:
+            continue
+        with stream:
+            snapshot_size = os.fstat(stream.fileno()).st_size
+            lines = iter(
+                lambda stream=stream, snapshot_size=snapshot_size: stream.readline(
+                    min(MAX_LINE + 1, snapshot_size - stream.tell())
+                ),
+                b"",
+            )
+            outcomes, offset, blocked = consume(lines, 0, args, token, opener)
+        totals.update(outcomes)
+        if blocked:
+            report(totals, offset, blocked)
+            return 1
+        args.limit -= sum(outcomes[k] for k in ("accepted", "duplicate", "sampled_out"))
+        if args.limit <= 0:
+            break
+    report(totals, None, None)
+    return 0 if totals["accepted"] or totals["duplicate"] else 1
+
+
 def report(outcomes, offset, blocked):
     print(
         json.dumps(
@@ -185,9 +217,7 @@ def report(outcomes, offset, blocked):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "file", type=Path, help="JSONL segment, or collector directory with --follow"
-    )
+    parser.add_argument("file", type=Path, help="JSONL segment or local dump directory")
     parser.add_argument(
         "--limit", type=int, default=100, help="Maximum submissions per batch"
     )
@@ -206,6 +236,11 @@ def main():
         metavar="CHECKPOINT",
         help="Follow all segments and persist offsets",
     )
+    parser.add_argument(
+        "--replay",
+        action="store_true",
+        help="Replay a bounded snapshot of a local dump directory",
+    )
     args = parser.parse_args()
     if args.since and args.since.tzinfo is None:
         parser.error("--since requires a timezone")
@@ -215,12 +250,18 @@ def main():
         parser.error(
             "--follow requires a collector directory and manages its own offsets"
         )
+    if args.replay and (args.follow or args.offset or not args.file.is_dir()):
+        parser.error(
+            "--replay requires a directory and cannot be combined with --follow or --offset"
+        )
     token = next(
         line.partition("=")[2]
         for line in (SERVICE_ROOT / ".env").read_text().splitlines()
         if line.startswith("INGEST_TOKEN=")
     )
     opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+    if args.replay:
+        return replay(args, token, opener)
     if args.follow:
         try:
             return follow(args, token, opener)

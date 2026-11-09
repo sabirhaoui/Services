@@ -1,13 +1,18 @@
 # Journaux distants de Project Twin
 
-DevConsole collecte les logs Docker Compose par SSH. Le service de supervision lit les fichiers locaux produits par DevConsole. Il ne lance aucune commande sur la production.
+DevConsole dépose les journaux Docker Compose dans `C:\workspace\logs\project_twins\sftp.prod.assystan`. Le dashboard se reconstruit à partir des fichiers déjà présents. Le job DevConsole se lance séparément pour rafraîchir le dump si nécessaire.
 
 ```powershell
-lab project_twin trail production start --target sftp.prod.assystan
-lab project_twin trail production status --target sftp.prod.assystan
-
 Set-Location C:\workspace\Services\filebeat-dashboard
 ./scripts/local.ps1 up -Engine podman
+./scripts/local.ps1 replay -Limit 100
+```
+
+Le rejeu traite au plus 100 lignes valides par défaut. Il commence par `events.jsonl`, puis remonte les archives `events.*.jsonl` jusqu'à atteindre la limite. Utiliser `-LogDirectory` pour sélectionner un autre dossier de dumps et `-Limit` pour ajuster le volume. Relancer la même commande peut signaler des doublons. Loki conserve ses propres données selon sa rétention.
+
+Le suivi local reste disponible si DevConsole continue à alimenter le dossier :
+
+```powershell
 $source = 'C:\workspace\logs\project_twins\sftp.prod.assystan'
 $checkpoint = '.data/production-checkpoint.json'
 $since = if (Test-Path $checkpoint) {
@@ -18,7 +23,7 @@ $since = if (Test-Path $checkpoint) {
 python scripts/import_remote_logs.py $source --since $since --follow $checkpoint
 ```
 
-Le statut doit indiquer `collector_verified: true`. Vérifier aussi que le curseur avance quand la production émet. Le script de suivi reste au premier plan. Utiliser un seul processus par checkpoint. Pour reprendre, relancer avec le même chemin, le même `--since` et les mêmes filtres. Pour changer la fenêtre, choisir un autre checkpoint. Sans `--since`, le suivi rejoue les archives disponibles et peut remplir la file locale. L'option `--limit` borne le nombre d'envois par lot en mode suivi.
+Le script de suivi reste au premier plan. Utiliser un seul processus par checkpoint. Pour reprendre, relancer avec le même chemin, le même `--since` et les mêmes filtres. Pour changer la fenêtre, choisir un autre checkpoint. Sans `--since`, le suivi rejoue les archives disponibles et peut remplir la file locale. L'option `--limit` borne le nombre d'envois par lot en mode suivi.
 
 Le script lit les archives `events.*.jsonl` et `events.jsonl`. Il enregistre son offset local après chaque lot traité et suit le fichier actif lors d'un renommage par DevConsole. Une erreur réseau ou un retour 429/503 déclenche une reprise sans avancer après la ligne bloquée. Les enveloppes invalides et les services hors liste sont comptés. La déduplication repose sur le service, l'horodatage d'origine et la ligne d'origine, indépendamment de l'heure de réception DevConsole. La rétention locale des identifiants limite la déduplication des anciens rejeux.
 
@@ -30,4 +35,4 @@ Pour un import ponctuel, passer un fichier et une limite :
 python scripts/import_remote_logs.py (Join-Path $source 'events.jsonl') --limit 20
 ```
 
-Pour arrêter, interrompre le suivi avec Ctrl+C, puis arrêter le collecteur si nécessaire avec `lab project_twin trail production stop --target sftp.prod.assystan`.
+Pour arrêter le suivi local, utiliser Ctrl+C.
