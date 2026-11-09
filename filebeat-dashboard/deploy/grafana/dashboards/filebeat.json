@@ -16,7 +16,7 @@
       {
         "name": "service",
         "type": "custom",
-        "query": "demo,backend,celery-worker,connector",
+        "query": "demo,backend,celery-worker,connector,celery-beat,postgres,redis",
         "includeAll": true,
         "allValue": ".+",
         "current": {
@@ -352,7 +352,7 @@
       },
       "targets": [
         {
-          "expr": "quantile_over_time(0.5, {service_name=~\"$service\", environment=~\"$environment\"} | json | unwrap duration_ms | __error__=\"\" [5m]) by (service_name)",
+          "expr": "quantile_over_time(0.5, {service_name=~\"$service\", environment=~\"$environment\"} | json duration_ms=\"duration_ms\" | unwrap duration_ms | __error__=\"\" [5m]) by (service_name)",
           "refId": "A"
         }
       ],
@@ -379,7 +379,7 @@
       },
       "targets": [
         {
-          "expr": "quantile_over_time(0.95, {service_name=~\"$service\", environment=~\"$environment\"} | json | unwrap duration_ms | __error__=\"\" [5m]) by (service_name)",
+          "expr": "quantile_over_time(0.95, {service_name=~\"$service\", environment=~\"$environment\"} | json duration_ms=\"duration_ms\" | unwrap duration_ms | __error__=\"\" [5m]) by (service_name)",
           "refId": "A"
         }
       ],
@@ -406,7 +406,7 @@
       },
       "targets": [
         {
-          "expr": "quantile_over_time(0.99, {service_name=~\"$service\", environment=~\"$environment\"} | json | unwrap duration_ms | __error__=\"\" [5m]) by (service_name)",
+          "expr": "quantile_over_time(0.99, {service_name=~\"$service\", environment=~\"$environment\"} | json duration_ms=\"duration_ms\" | unwrap duration_ms | __error__=\"\" [5m]) by (service_name)",
           "refId": "A"
         }
       ],
@@ -443,6 +443,28 @@
         },
         "overrides": []
       }
+    },
+    {
+      "id": 15,
+      "title": "Journaux distants importés (sans texte brut)",
+      "description": "L'axe utilise l'heure d'ingestion. Le champ timestamp conserve l'heure d'origine du journal.",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 56,
+        "w": 24,
+        "h": 10
+      },
+      "targets": [
+        {
+          "expr": "{service_name=~\"$service\", environment=\"production\"} |= `\"event_type\": \"log.received\"` |= `\"source_service\":`",
+          "refId": "A"
+        }
+      ]
     }
   ],
   "description": "Métriques pipeline globales ; filtres service/environnement appliqués aux logs et latences. Fenêtres 1m débit, 5m latence. NaN/absence = données insuffisantes. Une anomalie ne prouve aucune cause."

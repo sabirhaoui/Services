@@ -90,7 +90,7 @@ def summarize(events):
 
 def reconstruct(events, trace_id):
     rows = sorted(
-        [e for e in events if e["trace_id"] == trace_id],
+        [e for e in events if e.get("trace_id") == trace_id],
         key=lambda e: (e["timestamp"], e["event_id"]),
     )
     observed = [e["event_type"] for e in rows]

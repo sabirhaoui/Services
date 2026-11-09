@@ -26,3 +26,5 @@ Echantillonnage : SAMPLE_RATE dans [0,1], defaut 1. Hash stable de trace pseudon
 | 503 | stockage indisponible | retry meme ID avec delai borne |
 
 Le tampon producteur et les abandons avant acquittement sont sa responsabilite. Le gateway ne peut pas mesurer les evenements jamais recus.
+
+Les journaux de collecte utilisent `log.received` avec le message constant du meme nom. Trace et span sont facultatifs pour ce type uniquement. Le niveau `UNKNOWN` indique une severite non reconnue. Les journaux historiques peuvent depasser six jours de retard et restent soumis a la limite future de cinq minutes. Le gateway accepte uniquement les metadonnees du schema. La livraison Loki utilise `source_service`, `source_environment` et `source_level` dans le JSON pour eviter une collision avec les labels de flux.

@@ -243,3 +243,31 @@ def test_nonfinite_invalid_future_and_metrics(client):
     metrics = client.get("/metrics").text
     assert "filebeat_queue_depth 0.0" in metrics
     assert "filebeat_latency_anomaly NaN" in metrics
+
+
+def test_collector_import_preserves_timestamp_without_raw_fields(client):
+    normalize = runpy.run_path("scripts/import_remote_logs.py")["normalize"]
+    source = {
+        "schema_version": 1,
+        "service": "postgres-1",
+        "timestamp": "2026-01-01T10:00:00.123456789Z",
+        "message": "ERROR: confidential-example",
+        "raw": "another-confidential-example",
+        "host": "internal.example",
+    }
+    event = normalize(source)
+    assert event["timestamp"] == "2026-01-01T10:00:00.123456Z"
+    assert event["service"]["name"] == "postgres"
+    assert event["level"] == "ERROR"
+    assert "confidential" not in json.dumps(event)
+    assert "trace_id" not in event
+    assert post(client, event).json() == {"accepted": True, "trace_id": None}
+    assert (
+        post(
+            client, normalize({**source, "received_at": "2026-01-02T00:00:00Z"})
+        ).json()["accepted"]
+        is False
+    )
+    event["event_type"] = "http.completed"
+    event["message"] = "operation.completed"
+    assert post(client, event).status_code == 422

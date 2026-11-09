@@ -95,10 +95,16 @@ class Store:
             "environment": event["environment"],
             "level": event["level"],
         }
+        line = row[1]
+        if event["event_type"] == "log.received":
+            # Avoid JSON field names that collide with Loki stream labels.
+            for field in ("service", "environment", "level"):
+                event["source_" + field] = event.pop(field)
+            line = json.dumps(event)
         try:
             response = await client.post(
                 url + "/loki/api/v1/push",
-                json={"streams": [{"stream": labels, "values": [[ns, row[1]]]}]},
+                json={"streams": [{"stream": labels, "values": [[ns, line]]}]},
             )
             status = response.status_code
         except __import__("httpx").HTTPError:

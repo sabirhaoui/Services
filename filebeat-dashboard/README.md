@@ -25,7 +25,7 @@ Invoke-RestMethod http://127.0.0.1:18088/health/ready
 
 Remplacer `podman` par `docker` si utilise. `init` cree trois secrets distincts dans `.env` ignore ; aucun secret a copier depuis une autre application. Ne pas publier `.env`. Le mot de passe Grafana est `GRAFANA_PASSWORD` de ce fichier ; utilisateur admin. Ne pas utiliser `compose down -v` pour resoudre une panne.
 
-- [Grafana](http://localhost:13001/d/filebeat-health) : 14 panneaux, logs, latences, sante, qualite, anomalies et alertes.
+- [Grafana](http://localhost:13001/d/filebeat-health) : 15 panneaux, logs, latences, sante, qualite, anomalies et alertes.
 - [Prometheus](http://localhost:19090) et [Alertmanager local](http://localhost:19093).
 - [API](http://localhost:18088/docs) ; ingestion `POST /v1/events`, synthese `GET /v1/summary`, reconstruction `GET /v1/executions/{trace_pseudonymisee}` ; Bearer INGEST_TOKEN. Ne pas mettre le jeton dans une URL.
 
@@ -44,3 +44,5 @@ docs/           architecture, migration, contrat, analyses et runbooks
 ```
 
 Lire [architecture](docs/ARCHITECTURE.md), [contrat](docs/CONTRACT.md), [migration](docs/MIGRATION.md), [analyses](docs/ANALYTICS.md), [exploitation](docs/RUNBOOK.md) et [preuves et limites](docs/VALIDATION.md). Les fonctions sont des modules d'un gateway ; Loki, Prometheus, Grafana et Alertmanager sont des composants existants, pas des moteurs reinventes.
+
+[Collecte des journaux de production](docs/REMOTE_LOGS.md) via DevConsole, import avec reprise et panneau Grafana.

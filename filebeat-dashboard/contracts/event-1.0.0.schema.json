@@ -13,8 +13,6 @@
     "environment",
     "level",
     "message",
-    "trace_id",
-    "span_id",
     "attributes"
   ],
   "properties": {
@@ -32,7 +30,8 @@
         "job.started",
         "job.completed",
         "connector.started",
-        "connector.completed"
+        "connector.completed",
+        "log.received"
       ]
     },
     "timestamp": {
@@ -54,7 +53,10 @@
             "demo",
             "backend",
             "celery-worker",
-            "connector"
+            "connector",
+            "postgres",
+            "redis",
+            "celery-beat"
           ]
         },
         "version": {
@@ -77,14 +79,16 @@
         "INFO",
         "WARNING",
         "ERROR",
-        "CRITICAL"
+        "CRITICAL",
+        "UNKNOWN"
       ]
     },
     "message": {
       "enum": [
         "operation.started",
         "operation.completed",
-        "operation.failed"
+        "operation.failed",
+        "log.received"
       ]
     },
     "trace_id": {
@@ -161,5 +165,41 @@
         }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "event_type": {
+            "const": "log.received"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "message": {
+            "const": "log.received"
+          }
+        }
+      },
+      "else": {
+        "required": [
+          "trace_id",
+          "span_id"
+        ],
+        "properties": {
+          "message": {
+            "not": {
+              "const": "log.received"
+            }
+          },
+          "level": {
+            "not": {
+              "const": "UNKNOWN"
+            }
+          }
+        }
+      }
+    }
+  ]
 }

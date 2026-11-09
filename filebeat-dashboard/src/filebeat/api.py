@@ -151,7 +151,9 @@ def create_app(path=None, transport=None, worker=True):
             age = (
                 datetime.now(UTC) - datetime.fromisoformat(event["timestamp"])
             ).total_seconds()
-            if age > 6 * 86400 or age < -300:
+            if age < -300 or (
+                age > 6 * 86400 and event["event_type"] != "log.received"
+            ):
                 raise ValueError()
         except (ValueError, TypeError, RecursionError, OverflowError):
             # Invalid payloads never reach disk, quarantine, logs or error details.
@@ -163,7 +165,7 @@ def create_app(path=None, transport=None, worker=True):
             return {
                 "accepted": False,
                 "reason": "sampled_out",
-                "trace_id": event["trace_id"],
+                "trace_id": event.get("trace_id"),
             }
         event["observed_timestamp"] = (
             datetime.now(UTC).isoformat().replace("+00:00", "Z")
@@ -182,7 +184,7 @@ def create_app(path=None, transport=None, worker=True):
             outcomes.labels("storage_error").inc()
             raise HTTPException(503, "storage unavailable") from None
         outcomes.labels("accepted" if accepted else "duplicate").inc()
-        return {"accepted": accepted, "trace_id": event["trace_id"]}
+        return {"accepted": accepted, "trace_id": event.get("trace_id")}
 
     @app.get("/v1/summary", dependencies=[Depends(auth)])
     async def summary():
